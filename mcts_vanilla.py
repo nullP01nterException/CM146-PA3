@@ -1,4 +1,3 @@
-
 from mcts_node import MCTSNode
 from random import choice
 from math import sqrt, log
@@ -17,16 +16,25 @@ def traverse_nodes(node, state, identity, board):
     Returns:        A node from which the next stage of the search can proceed.
 
     """
-    leaf_node = None
-    best_value = 0  #holds value for best path based on wins/visits
-    child_nodes = node.child_nodes
+    if len(node.untried_actions) != 0:
+        return node
 
-    if len(child_nodes) != 0:
-        for child in child_nodes:
-            if child.visits != 0 and child.wins/child.visits > best_value:
-                leaf_node = child
+    max_child = 0
+    traverse_child = None
 
-    return leaf_node
+    for child in node.child_nodes:
+        temp_max_child = (child.win / child.visits) + explore_faction * sqrt(log(node.visits) / child.visits)
+        if identity == 1:
+            if temp_max_child > max_child:
+                max_child = temp_max_child
+                traverse_child = child
+        else:
+            if temp_max_child < max_child:
+                max_child = temp_max_child
+                traverse_child = child
+
+    return traverse_child
+
     # Hint: return leaf_node
 
 
@@ -52,10 +60,16 @@ def rollout(state, board):
         state:  The state of the game.
 
     """
-    pass
+    is_end = board.is_ended(state)
+    curr_state = state
+    while not is_end:
+        random_action = choice(board.legal_actions(curr_state))
+        curr_state = board.next_state(curr_state,random_action)
+        is_end = board.is_ended(curr_state)
+    return board.points_values(curr_state)
 
 
-def backpropagate(node, won, board):
+def backpropagate(node, won):
     """ Navigates the tree from a leaf node to the root, updating the win and visit count of each node along the path.
 
     Args:
@@ -63,12 +77,18 @@ def backpropagate(node, won, board):
         won:    An indicator of whether the bot won or lost the game.
 
     """
-
-    pass
+    curr_node = node
+    while curr_node.parent is not None:
+        if won[1] > won[2]:
+            curr_node.wins += 1
+        elif won[1] < won[2]:
+            curr_node.wins -= 1
+        curr_node.visits += 1
+        curr_node = node.parent
+    return None
 
 
 def think(board, state):
-    print("state", state)
     """ Performs MCTS by sampling games and calling the appropriate functions to construct the game tree.
 
     Args:
@@ -90,8 +110,20 @@ def think(board, state):
         node = root_node
 
         # Do MCTS - This is all you!
-        #start work here with mcts
-        #traverse_nodes(node, state, identity_of_bot)
+        child_node = traverse_nodes(node,sampled_game,identity_of_bot,board)
+        expanded_node = expand_leaf(node, board,sampled_game)
+        win_dict=rollout(sampled_game,board)
+        backpropagate(expanded_node,win_dict)
+        node = child_node
     # Return an action, typically the most frequently used action (from the root) or the action with the best
     # estimated win rate.
-    return None
+    max_child_visits = 0
+    selected_action = None
+    print("here",node.parent_action)
+    for children in node.child_nodes:
+        print("child",children)
+        if children.visits > max_child_visits:
+            max_child_visits = children.visits
+            selected_action = children.parent_action
+
+    return selected_action
