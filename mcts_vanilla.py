@@ -1,6 +1,6 @@
 from mcts_node import MCTSNode
 from random import choice
-from math import sqrt, log
+from math import sqrt, log, inf
 
 num_nodes = 1000
 explore_faction = 2.
@@ -16,7 +16,7 @@ def traverse_nodes(node, state, identity, board):
     Returns:        A node from which the next stage of the search can proceed.
 
     """
-    if len(node.untried_actions) != 0:
+    """if len(node.untried_actions) != 0:
         return node
 
     max_child = 0
@@ -31,9 +31,20 @@ def traverse_nodes(node, state, identity, board):
         else:
             if temp_max_child < max_child:
                 max_child = temp_max_child
+                traverse_child = child"""
+    curr_node = node
+    while len(curr_node.child_nodes) != 0:
+        for child in curr_node.child_nodes:
+            if child.vists == 0:
+                temp_max_child = inf
+            else:
+                temp_max_child = (child.win / child.visits) + explore_faction * sqrt(log(node.visits) / child.visits)
+            if temp_max_child > max_child:
+                max_child = temp_max_child
                 traverse_child = child
+            curr_node = traverse_child
 
-    return traverse_child
+    return curr_node
 
     # Hint: return leaf_node
 
@@ -48,7 +59,12 @@ def expand_leaf(node, board, state):
     Returns:    The added child node.
 
     """
-    new_node = MCTSNode(parent=node, parent_action=node.parent_action, action_list=board.legal_actions(state))
+    if node.parent is None and node.parent_action is None:
+        new_node = MCTSNode(parent=node,parent_action=choice(board.legal_actions(state)),action_list=board.legal_actions(state))
+        node.child_nodes[new_node.parent_action] = new_node
+    else:
+        new_node = MCTSNode(parent=node.parent, parent_action=node.parent_action, action_list=board.legal_actions(state))
+        node.parent.child_nodes[new_node.parent_action] = new_node
     return new_node
     # Hint: return new_node
 
@@ -108,22 +124,28 @@ def think(board, state):
 
         # Start at root
         node = root_node
-
         # Do MCTS - This is all you!
-        child_node = traverse_nodes(node,sampled_game,identity_of_bot,board)
-        expanded_node = expand_leaf(node, board,sampled_game)
-        win_dict=rollout(sampled_game,board)
-        backpropagate(expanded_node,win_dict)
-        node = child_node
+        selected_node = traverse_nodes(node,sampled_game,identity_of_bot,board)
+        if not board.is_ended(sampled_game):
+            expand_leaf(selected_node,board,sampled_game)
+
+        sim_node = node
+        if len(sim_node.child_nodes) > 0:
+            sim_node = choice(node.child_nodes)
+            sampled_game = board.next_state(sampled_game, sim_node.parent_action)
+
+        simulation = rollout(sampled_game, board)
+        backpropagate(sim_node,simulation)
     # Return an action, typically the most frequently used action (from the root) or the action with the best
     # estimated win rate.
-    max_child_visits = 0
+    """max_child_visits = 0
     selected_action = None
-    print("here",node.parent_action)
+    print("here",root_node.child_nodes)
     for children in node.child_nodes:
         print("child",children)
         if children.visits > max_child_visits:
             max_child_visits = children.visits
             selected_action = children.parent_action
 
-    return selected_action
+    return selected_action"""
+    return None
