@@ -47,7 +47,17 @@ def expand_leaf(node, board, state):
 
 def rollout(state, board):
     """ Given the state of the game, the rollout plays out the remainder randomly.
-
+	
+		if board.is_ended(state):
+			win_dict = board.points_values(state)
+			if state[-1] = 1:
+				return win_dict[1]
+			else if state[-1] = 2:
+				return win_dict[2]    #can shorten this without if
+		action_to_try = random.choice(board.legal_actions)
+		board.next_state(state, action_to_try)
+		rollout(state, board)
+		
     Args:
         state:  The state of the game.
 
