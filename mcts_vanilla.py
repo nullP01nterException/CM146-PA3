@@ -16,6 +16,7 @@ def traverse_nodes(node, state, identity, board):
 	Returns:		A node from which the next stage of the search can proceed.
 
 	"""
+
 	if len(node.untried_actions) != 0:
 		return node
 
@@ -24,6 +25,7 @@ def traverse_nodes(node, state, identity, board):
 
 	for child in node.child_nodes.values():
 		temp_max_child = (child.wins / child.visits) + explore_faction * sqrt(log(node.visits) / child.visits)
+
 		if identity == 1:
 			if temp_max_child > max_child:
 				max_child = temp_max_child
@@ -34,7 +36,7 @@ def traverse_nodes(node, state, identity, board):
 				traverse_child = child
 
 	action_to_take = traverse_child.parent_action
-	print("test", action_to_take)
+
 	#print("old action", node.parent_action)
 	board.next_state(state, action_to_take)
 	#print("new action", board.display_action(action_to_take))
@@ -53,12 +55,13 @@ def expand_leaf(node, board, state):
 	Returns:	The added child node.
 
 	"""
-	
+
 	action_update = choice(node.untried_actions)
 	next_state_temp = board.next_state(state, action_update)
 	new_node = MCTSNode(parent=node, parent_action=action_update, action_list=board.legal_actions(next_state_temp))
 	node.child_nodes[action_update] =  new_node
 	node.untried_actions.remove(action_update)
+
 	return new_node
 	# Hint: return new_node
 
@@ -89,7 +92,6 @@ def backpropagate(node, won):
 	"""
 	
 	
-	
 	curr_node = node
 	while curr_node.parent is not None:
 		if won[1] > won[2]:
@@ -116,7 +118,7 @@ def think(board, state):
 	root_node = MCTSNode(parent=None, parent_action=None, action_list=board.legal_actions(state))
 
 
-	max_child_visits = 0
+	max_child_visits = 0        #May belong inside of below loop, took it out during testing, never got that far tho
 	selected_action = None
 	
 	for step in range(num_nodes):
