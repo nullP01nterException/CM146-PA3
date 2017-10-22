@@ -2,7 +2,7 @@ from mcts_node import MCTSNode
 from random import choice
 from math import sqrt, log
 
-num_nodes = 50
+num_nodes = 100
 explore_faction = 2.
 
 
@@ -14,31 +14,32 @@ def traverse_nodes(node, state, identity, board):
         identity:	The bot's identity, either 'red' or 'blue'.
     Returns:		A node from which the next stage of the search can proceed.
     """
-    if len(node.untried_actions) > 0:
-        return node
+
     max_child = 0
     min_child = 100
     traverse_child = node
-#GETS STUCK HERE FROM CIRCULAR/SELF REFERENCE
-    while len(traverse_child.child_nodes) > 0:
-        print("here",traverse_child)
-        print("there", traverse_child.child_nodes)
-        print(traverse_child.child_nodes.keys())
-        print(traverse_child.child_nodes.values())
-        #print("here",traverse_child.child_nodes.keys())
-        #print("here child nodes", traverse_child.child_nodes.values())
-        for child in traverse_child.child_nodes.values():
+
+    while len(traverse_child.child_nodes) != 0:
+        if len(traverse_child.untried_actions) > 0:
+            return traverse_child
+        #print("here",traverse_child.child_nodes)
+        #print("there", len(traverse_child.untried_actions))
+        #print(traverse_child.child_nodes.keys())
+        #print(traverse_child.child_nodes.values())
+        #print(traverse_child.tree_to_string(horizon=9))
+        for key in traverse_child.child_nodes.keys():
+            temp_traverse_child = traverse_child.child_nodes[key]
             if identity == 1:
-                temp_max_child = (child.wins / child.visits) + explore_faction * sqrt(log(node.visits) / child.visits)
+                temp_max_child = (traverse_child.child_nodes[key].wins / traverse_child.child_nodes[key].visits) + explore_faction * sqrt(log(node.visits) / traverse_child.child_nodes[key].visits)
                 if temp_max_child > max_child:
                     max_child = temp_max_child
-                    traverse_child = child
+                    temp_traverse_child = traverse_child.child_nodes[key]
             else:
-                temp_min_child = (1-(child.wins / child.visits)) + explore_faction * sqrt(log(node.visits) / child.visits)
+                temp_min_child = (1-(traverse_child.child_nodes[key].wins / traverse_child.child_nodes[key].visits)) + explore_faction * sqrt(log(node.visits) / traverse_child.child_nodes[key].visits)
                 if temp_min_child < min_child:
                     min_child = temp_min_child
-                    traverse_child = child
-
+                    temp_traverse_child = traverse_child.child_nodes[key]
+        traverse_child = temp_traverse_child
     #action_to_take = traverse_child.parent_action
 
     # print("old action", node.parent_action)
@@ -123,15 +124,20 @@ def think(board, state):
 
         # Do MCTS - This is all you!              [Should it be looping way more? as ut resets the game state each time, rollout should be what does that tho]
         child_node = traverse_nodes(node, sampled_game, identity_of_bot, board)
-        expanded_node = expand_leaf(child_node, board,
-                                    next_state)  # PASSES CHILD NODE INSTEAD OF NODE NOW, USING SELECTION TO EXPAND
-        next_state = board.next_state(next_state,expanded_node.parent_action)
-        win_dict = rollout(next_state, board)
-        backpropagate(expanded_node,
-                      win_dict)  # given the fact that in expand it specifies where it visits, and rollout tells result, back should handle the updating of max_visits properly, SHOULD BE BUG HERE
+        if child_node.parent != None:
+            check_win_state = board.next_state(next_state,child_node.parent_action)
+            has_won = board.is_ended(check_win_state)
+        else:
+            has_won = board.is_ended(next_state)
+        if not has_won:
+            expanded_node = expand_leaf(child_node, board, next_state)
+            next_state = board.next_state(next_state,expanded_node.parent_action)
+            win_dict = rollout(next_state, board)
+            backpropagate(expanded_node, win_dict)  # given the fact that in expand it specifies where it visits, and rollout tells result, back should handle the updating of max_visits properly, SHOULD BE BUG HERE
         #node = child_node  # MAY NOT WANT? Probably do, think later
         #print(node.tree_to_string(horizon=9))
         #identity_of_bot = board.current_player(next_state)
+        continue
 
     # Return an action, typically the most frequently used action (from the root) or the action with the best
     # estimated win rate.
@@ -140,5 +146,5 @@ def think(board, state):
             max_child_visits = children.visits
             selected_action = children.parent_action
 
-    print("action = ", selected_action, "num visits = ", max_child_visits)
+    #print("action = ", selected_action, "num visits = ", max_child_visits)
     return selected_action
