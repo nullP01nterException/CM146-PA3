@@ -6,6 +6,7 @@ import mcts_modified
 import random_bot
 import rollout_bot
 
+
 players = dict(
     random_bot=random_bot.think,
     rollout_bot=rollout_bot.think,
