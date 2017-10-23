@@ -60,106 +60,17 @@ def expand_leaf(node, board, state):
 
 	
 def rollout(state, board):
-	""" Given the state of the game, the rollout plays out the remainder randomly.
-	Args:
-		state:	The state of the game.
-	"""
-	is_end = board.is_ended(state)
-	curr_state = state
-	while not is_end:
-		smart_move = None
-		moves = board.legal_actions(curr_state)
-		if (len(board.legal_actions(curr_state)) < 8):   # allowing first moves to be random, no way to block or win with under 2 chips in play
-			for move in moves:
-				column_B = 0
-				column_W = 0
-				row_B = 0
-				row_W = 0
-				diagonal_B = 0
-				diagonal_W = 0
-				move_x = move[1]
-				move_y = move[0]
-				temp = board.owned_boxes(curr_state)
-				for i in range (0,2):       ##COLUMN CHECK BEGINS
-					if board.owned_boxes(curr_state)[i, move_x] == 2:
-						column_B += 2
-					elif board.owned_boxes(curr_state)[i, move_x] == 1:
-						column_W += 1
-											##COLUMN CHECK ENDS
-											##ROW CHECK BEGINS
-					if board.owned_boxes(curr_state)[move_y, i] == 2:
-						row_B += 2
-					elif board.owned_boxes(curr_state)[move_y, i] ==1:
-						row_W += 1
-											##ROW CHECK ENDS
-					
-				if column_W == 2 or row_W == 2:	## Column and Row win check
-					smart_move = move
-					break
-				
-										##DIAGONAL CHECK \ MACH2 BEGINS
-				if move == (0,0) or (1,1) or (2,2):
-					if temp[0,0] == 2:
-						diagonal_B += 2
-					elif temp[0,0] == 1:
-						diagonal_W += 1
-					if temp[1,1] == 2:
-						diagonal_B += 2
-					elif temp[1,1] == 1:
-						diagonal_W += 1
-					if temp[2,2] == 2:
-						diagonal_B += 2
-					elif temp[2,2] == 1:
-						diagonal_W += 1
-										
-										##DIAGONAL CHECK \ MACH3 ENDS
-						
-				if diagonal_W == 2:     ##Diagonal \ win check
-					smart_move = move
-					break
-				if diagonal_B == 4:     ##Diagonal \ block check
-					smart_move = move
-					
-					diagonal_B = 0
-					diagonal_W = 0
-										##DIAGONAL CHECK / MACH3 BEGINS
-				if move == (2,0) or (1,1) or (0,2):
-					if temp[2,0] == 2:
-						diagonal_B += 2
-					elif temp[2,0] == 1:
-						diagonal_W += 1
-					if temp[1,1] == 2:
-						diagonal_B += 2
-					elif temp[1,1] == 1:
-						diagonal_W += 1
-					if temp[0,2] == 2:
-						diagonal_B += 2
-					elif temp[0,2] == 1:
-						diagonal_W += 1
-										##DIAGONAL CHECK / MACH3 ENDS
-										
-				if diagonal_W == 2:     ##Diagonal / win check
-					smart_move = move
-					break
-				if diagonal_B == 4:		##Diagonal / block check
-					smart_move = move
-		
-				if column_B == 4 or row_B == 4:	##Column and Row block check
-					smart_move = move
-					break
-		
-		
-		if smart_move != None:
-			curr_state = board.next_state(curr_state, smart_move)
-			is_end = board.points_values(curr_state)
-		else:
-			#BELOW IS IF NO ABOVE CONDITION IS MET TO DECIDE BLOCK / WIN, Now focus on playing next to 
-			if 
-			
-			random_action = choice(board.legal_actions(curr_state))
-			curr_state = board.next_state(curr_state, random_action)
-			is_end = board.is_ended(curr_state)
-	return board.points_values(curr_state)
+    """ Given the state of the game, the rollout plays out the remainder randomly.
+    Args:
+        state:	The state of the game.
+    """
+    is_end = board.is_ended(state)
+    curr_state = state
+    while not is_end:
+        random_action = choice(board.legal_actions(curr_state))
+        curr_state = board.next_state(curr_state, random_action)
+        is_end = board.is_ended(curr_state)
+    return board.points_values(curr_state)
 
 
 def backpropagate(node, won):
